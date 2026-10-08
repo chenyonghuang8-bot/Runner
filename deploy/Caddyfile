@@ -1,0 +1,25 @@
+{
+    admin off
+}
+{$RUNNER_DOMAIN} {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+    }
+    request_body {
+        max_size 25MB
+    }
+    @private path /data /data/* /private /private/* /backups /backups/* /.env /docs /openapi.json /redoc
+    respond @private 404
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+    handle {
+        root * /srv
+        header Cache-Control "no-cache"
+        try_files {path} /index.html
+        file_server
+    }
+}

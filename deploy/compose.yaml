@@ -1,0 +1,59 @@
+name: runner
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+    env_file:
+      - path: ./runtime.env
+        format: raw
+    environment:
+      APP_ENV: production
+      APP_PUBLIC_URL: https://${RUNNER_DOMAIN:?Set RUNNER_DOMAIN in deploy/site.env}
+      DATABASE_URL: sqlite:////data/runner.db
+      PRIVATE_STORAGE_DIR: /data/private
+    volumes:
+      - runner_data:/data
+      - runner_backups:/backups
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    environment:
+      RUNNER_DOMAIN: ${RUNNER_DOMAIN:?Set RUNNER_DOMAIN in deploy/site.env}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+volumes:
+  runner_data:
+  runner_backups:
+  caddy_data:
+  caddy_config:

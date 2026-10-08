@@ -1,0 +1,7 @@
+<script setup lang="ts">
+import {ref} from 'vue'
+const originals=ref(false),busy=ref(false),error=ref(''),notice=ref('')
+async function download(){busy.value=true;error.value='';try{const r=await fetch(`/api/v1/data/export?include_originals=${originals.value}`,{credentials:'same-origin'});if(!r.ok){const e=await r.json();throw new Error(e.message||'导出失败')}const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download='runner-data.zip';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);notice.value='导出包已交给浏览器下载。请核对下载是否完成；没有发送到外部服务。'}catch(e){error.value=(e as Error).message}finally{busy.value=false}}
+</script>
+<template><section class="card panelwide export-panel"><div class="sectionhead"><h2>保存一份自己的数据</h2><span class="badge">仅本机导出</span></div><p class="tiny muted">包含档案、日程、训练记录（包含旧版本历史）、身体反馈、截图读数与核对历史、计划版本、聊天、天气与提醒记录及AI费用。待核对和已确认数据保留各自状态；不包含密码、登录会话或应用密钥。</p><label class="privacy-check"><input v-model="originals" type="checkbox">同时包含截图原图（可能含账号、地图与健康资料，导出包请自己妥善保管）</label><p class="tiny muted">ZIP包含可读JSON和散列清单。数据导出包用于查看、留存，不支持直接导入或恢复数据库；完整本机备份与恢复说明见项目README。</p><p v-if="error" class="error" role="alert">{{error}}</p><p v-if="notice" role="status">{{notice}}</p><button class="btn primary" :disabled="busy" @click="download">{{busy?'正在准备…':'下载我的数据（ZIP）'}}</button></section></template>
+<style scoped>.export-panel{margin-top:24px;overflow-wrap:anywhere}.export-panel .sectionhead{gap:12px;flex-wrap:wrap}.export-panel p{margin:14px 0}.privacy-check{display:block;font-size:13px;line-height:1.8;margin:16px 0}</style>

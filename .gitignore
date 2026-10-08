@@ -1,0 +1,26 @@
+.env
+.env.*
+!.env.example
+data/
+private/
+uploads/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite*
+*.log
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+coverage/
+.DS_Store
+# Deployment runtime configuration (templates remain public).
+deploy/runtime.env
+deploy/site.env
+
+# Public bundled city reference catalogue, not user runtime data.
+!backend/app/data/
+!backend/app/data/weather-cities.json
